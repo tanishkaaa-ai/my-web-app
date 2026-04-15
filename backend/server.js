@@ -6,11 +6,17 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const User = require("./models/User");
+const User = require("./models/user");
+const session = require("express-session");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:3001"],
+  credentials: true
+}));
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB connected ✅"))
@@ -18,6 +24,48 @@ mongoose.connect(process.env.MONGO_URI)
 
 const path = require("path");
 
+
+// Session
+app.use(session({
+  secret: "secretkey",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    sameSite: "none"
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Serialize
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+
+// Google Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:5000/auth/google/callback"
+  },
+  (accessToken, refreshToken, profile, done) => {
+    return done(null, profile);
+  }
+));
+
+// Routes
+app.get("/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get("/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "http://localhost:3001/" }),
+  (req, res) => {
+    res.redirect('http://localhost:3001/');
+  }
+);
 
 
 
@@ -84,6 +132,22 @@ app.post("/login", async (req, res) => {
     console.log(err);
     res.status(500).json({ error: "Login error" });
   }
+});
+
+
+app.get('/api/user', (req, res) => {
+  if (req.user) {
+    res.json(req.user);
+  } else {
+    res.status(401).json({ message: 'Not logged in' });
+  }
+});
+
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return next(err);
+    res.redirect('/');
+  });
 });
 
 
