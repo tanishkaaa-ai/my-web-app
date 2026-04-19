@@ -12,6 +12,18 @@ function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('token');
+
+    if (tokenFromUrl) {
+      localStorage.setItem('token', tokenFromUrl);
+      params.delete('token');
+      const nextUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', nextUrl);
+    }
+
     fetchUser();
   }, []);
 

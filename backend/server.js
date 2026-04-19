@@ -23,6 +23,11 @@ const allowedOrigins = [...new Set(
     .map(origin => origin.trim())
     .filter(Boolean)
 )];
+const signToken = (userId) => jwt.sign(
+  { userId },
+  process.env.JWT_SECRET,
+  { expiresIn: "1h" }
+);
 
 app.set("trust proxy", 1);
 app.use(express.json());
@@ -67,8 +72,39 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: `${baseUrl}/auth/google/callback`
   },
-  (accessToken, refreshToken, profile, done) => {
-    return done(null, profile);
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value;
+
+      if (!email) {
+        return done(new Error("Google account did not provide an email address"));
+      }
+
+      let user = await User.findOne({
+        $or: [
+          { googleId: profile.id },
+          { email }
+        ]
+      });
+
+      if (!user) {
+        user = await User.create({
+          name: profile.displayName || email.split("@")[0],
+          email,
+          googleId: profile.id
+        });
+      } else if (!user.googleId) {
+        user.googleId = profile.id;
+        if (!user.name && profile.displayName) {
+          user.name = profile.displayName;
+        }
+        await user.save();
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
   }
 ));
 
@@ -80,7 +116,8 @@ app.get("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: `${clientUrl}/` }),
   (req, res) => {
-    res.redirect(`${clientUrl}/`);
+    const token = signToken(req.user._id);
+    res.redirect(`${clientUrl}/?token=${token}`);
   }
 );
 
@@ -135,11 +172,7 @@ app.post("/login", async (req, res) => {
       return res.json({ message: "Invalid password" });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = signToken(user._id);
 
     res.json({
       message: "Login successful",
