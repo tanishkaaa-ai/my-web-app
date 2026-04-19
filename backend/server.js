@@ -6,15 +6,34 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const User = require("./models/user");
+const User = require("./models/User");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const path = require("path");
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+const port = Number(process.env.PORT) || 5000;
+const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
+const clientUrl = process.env.CLIENT_URL || baseUrl;
+const sessionSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me";
+const allowedOrigins = [...new Set(
+  [baseUrl, clientUrl, ...(process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:3001").split(",")]
+    .map(origin => origin.trim())
+    .filter(Boolean)
+)];
+
+app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"],
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 
@@ -22,18 +41,16 @@ mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB connected ✅"))
 .catch(err => console.log(err));
 
-const path = require("path");
-
 
 // Session
 app.use(session({
-  secret: "secretkey",
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,
-    sameSite: "none"
+    secure: isProduction,
+    sameSite: process.env.COOKIE_SAME_SITE || "lax"
   }
 }));
 
@@ -48,7 +65,7 @@ passport.deserializeUser((user, done) => done(null, user));
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: `${process.env.BASE_URL}/auth/google/callback`
+    callbackURL: `${baseUrl}/auth/google/callback`
   },
   (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
@@ -61,9 +78,9 @@ app.get("/auth/google",
 );
 
 app.get("/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: `${process.env.BASE_URL}/` }),
+  passport.authenticate("google", { failureRedirect: `${clientUrl}/` }),
   (req, res) => {
-    res.redirect(`${process.env.BASE_URL}/`);
+    res.redirect(`${clientUrl}/`);
   }
 );
 
@@ -171,14 +188,11 @@ app.get('/logout', (req, res) => {
 
 app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-app.get('/*', (req, res) => {
+app.get("/{*any}", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
 });
 
-app.listen(5000, "0.0.0.0", () => {
-  console.log("Server running on 5000");
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on ${port}`);
 });
-
-
-
 
