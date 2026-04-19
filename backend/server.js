@@ -48,7 +48,7 @@ passport.deserializeUser((user, done) => done(null, user));
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "http://localhost:5000/auth/google/callback"
+    callbackURL: `${process.env.BASE_URL}/auth/google/callback`
   },
   (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
@@ -61,9 +61,9 @@ app.get("/auth/google",
 );
 
 app.get("/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "http://localhost:3001/" }),
+  passport.authenticate("google", { failureRedirect: `${process.env.BASE_URL}/` }),
   (req, res) => {
-    res.redirect('http://localhost:3001/');
+    res.redirect(`${process.env.BASE_URL}/`);
   }
 );
 
@@ -78,7 +78,7 @@ app.get("/", (req, res) => {
 /* REGISTER */
 app.post("/register", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -88,6 +88,7 @@ app.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
+      name,
       email,
       password: hashedPassword
     });
@@ -140,6 +141,23 @@ app.get('/api/user', (req, res) => {
     res.json(req.user);
   } else {
     res.status(401).json({ message: 'Not logged in' });
+  }
+});
+
+app.get('/profile', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
   }
 });
 
