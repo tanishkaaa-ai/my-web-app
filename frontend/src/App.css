@@ -1,36 +1,260 @@
-.App {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.AppShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: stretch;
+  background:
+    radial-gradient(circle at top left, rgba(255, 210, 133, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(101, 161, 255, 0.18), transparent 30%),
+    linear-gradient(135deg, #0d1b2a 0%, #132238 52%, #1f3551 100%);
+  color: #f7f3ea;
 }
 
-input {
+.HeroPanel,
+.AuthCard {
+  padding: 72px 7vw;
+}
+
+.HeroPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.Eyebrow,
+.SectionLabel,
+.FeatureLabel,
+.ProfileLabel,
+.StatusBadge {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+}
+
+.Eyebrow,
+.SectionLabel {
+  color: #ffcf8b;
+  margin: 0 0 18px;
+}
+
+.HeroPanel h1,
+.AuthPanel h2,
+.WelcomePanel h2 {
+  margin: 0;
+  line-height: 1.02;
+}
+
+.HeroPanel h1 {
+  max-width: 9ch;
+  font-size: clamp(3rem, 7vw, 5.8rem);
+  font-weight: 700;
+}
+
+.HeroCopy,
+.SectionCopy,
+.WelcomeText {
+  max-width: 540px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(247, 243, 234, 0.78);
+}
+
+.HeroCopy {
+  margin: 22px 0 34px;
+}
+
+.FeatureList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 720px;
+}
+
+.FeatureCard,
+.ProfileItem {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 22px;
+  padding: 18px 18px 20px;
+}
+
+.FeatureCard strong,
+.ProfileItem strong {
   display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #ffffff;
 }
 
-button {
+.FeatureLabel,
+.ProfileLabel,
+.StatusBadge {
+  color: rgba(255, 243, 224, 0.62);
+}
+
+.AuthCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.AuthPanel,
+.WelcomePanel {
+  width: min(100%, 460px);
+  padding: 36px;
+  border-radius: 30px;
+  background: rgba(251, 247, 240, 0.96);
+  color: #172337;
+  box-shadow: 0 26px 90px rgba(4, 12, 24, 0.28);
+}
+
+.AuthHeader {
+  margin-bottom: 26px;
+}
+
+.AuthPanel h2,
+.WelcomePanel h2 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.SectionCopy,
+.WelcomeText {
+  margin: 14px 0 0;
+  color: #56657b;
+}
+
+.AuthForm {
+  display: grid;
+  gap: 16px;
+}
+
+.InputGroup {
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.InputGroup input {
   width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  padding: 14px 16px;
+  border: 1px solid #cfd8e4;
+  border-radius: 16px;
+  font-size: 1rem;
+  color: #172337;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.InputGroup input:focus {
+  outline: none;
+  border-color: #d17d36;
+  box-shadow: 0 0 0 4px rgba(209, 125, 54, 0.16);
+  transform: translateY(-1px);
+}
+
+.PrimaryButton,
+.SecondaryButton,
+.TextButton {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  margin: 10px 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-button:hover {
-  background-color: #0056b3;
+.PrimaryButton,
+.SecondaryButton {
+  padding: 14px 18px;
 }
 
-p {
-  color: red;
+.PrimaryButton {
+  background: linear-gradient(135deg, #c96b26 0%, #e29d45 100%);
+  color: #fffdf8;
+  box-shadow: 0 18px 28px rgba(201, 107, 38, 0.22);
+}
+
+.SecondaryButton {
+  background: #e8eef8;
+  color: #16324f;
+}
+
+.TextButton {
+  padding: 8px 10px;
+  background: transparent;
+  color: #55657a;
+}
+
+.PrimaryButton:hover,
+.SecondaryButton:hover,
+.TextButton:hover {
+  transform: translateY(-1px);
+}
+
+.Divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0;
+  color: #8a97aa;
+  font-size: 0.9rem;
+}
+
+.Divider::before,
+.Divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #dbe2ec;
+}
+
+.MessageBanner {
+  margin: 18px 0 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #eef3f8;
+  color: #344256;
+}
+
+.MessageBanner.success {
+  background: #e5f5ec;
+  color: #22603e;
+}
+
+.StatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #edf6e9;
+  color: #3e6a38;
+  margin-bottom: 18px;
+}
+
+.ProfileGrid {
+  display: grid;
+  gap: 14px;
+  margin: 26px 0 24px;
+}
+
+@media (max-width: 960px) {
+  .AppShell {
+    grid-template-columns: 1fr;
+  }
+
+  .HeroPanel,
+  .AuthCard {
+    padding: 40px 20px;
+  }
+
+  .HeroPanel h1 {
+    max-width: 12ch;
+  }
+
+  .FeatureList {
+    grid-template-columns: 1fr;
+  }
 }

@@ -11,13 +11,28 @@ function App() {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
 
+  const authMethodLabel = user?.googleId ? 'Google SSO' : 'email and password';
+  const messageTone = message.toLowerCase().includes('successful') || message.toLowerCase().includes('signed in')
+    ? 'success'
+    : 'default';
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenFromUrl = params.get('token');
+    const authError = params.get('error');
 
     if (tokenFromUrl) {
       localStorage.setItem('token', tokenFromUrl);
       params.delete('token');
+      setMessage('Signed in with Google SSO.');
+    }
+
+    if (authError === 'sso_failed') {
+      setMessage('Google SSO could not complete. Please try again.');
+      params.delete('error');
+    }
+
+    if (tokenFromUrl || authError) {
       const nextUrl = params.toString()
         ? `${window.location.pathname}?${params.toString()}`
         : window.location.pathname;
@@ -25,6 +40,13 @@ function App() {
     }
 
     fetchUser();
+
+    const syncAuth = () => {
+      fetchUser();
+    };
+
+    window.addEventListener('storage', syncAuth);
+    return () => window.removeEventListener('storage', syncAuth);
   }, []);
 
   const fetchUser = async () => {
@@ -41,16 +63,12 @@ function App() {
           setUser(userData);
           return;
         }
+
+        localStorage.removeItem('token');
       }
-      // Fallback to session check
-      const response = await fetch('/api/user', { credentials: 'include' });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      }
-      // If 401, user is not logged in, do nothing
+      setUser(null);
     } catch (error) {
-      // Handle network errors if needed
+      setUser(null);
     }
   };
 
@@ -62,7 +80,7 @@ function App() {
     localStorage.removeItem('token');
     setUser(null);
     try {
-      await fetch('/logout', { credentials: 'include' });
+      await fetch('/logout');
     } catch (error) {
       // Ignore errors
     }
@@ -100,53 +118,127 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {user ? (
-        <div>
-          <h1>Welcome, {user.displayName || user.name}!</h1>
-          <p>Email: {user.emails ? user.emails[0].value : user.email}</p>
-          <button onClick={handleLogout}>Logout</button>
+    <main className="AppShell">
+      <section className="HeroPanel">
+        <p className="Eyebrow">Secure Access Portal</p>
+        <h1>Sign in once and move through your workspace without friction.</h1>
+        <p className="HeroCopy">
+          Email login and Google SSO are both supported, so your auth flow can stay simple
+          while the app stays connected across tabs.
+        </p>
+        <div className="FeatureList">
+          <div className="FeatureCard">
+            <span className="FeatureLabel">Fast access</span>
+            <strong>JWT-powered sessions</strong>
+          </div>
+          <div className="FeatureCard">
+            <span className="FeatureLabel">Team-ready</span>
+            <strong>Google SSO available</strong>
+          </div>
+          <div className="FeatureCard">
+            <span className="FeatureLabel">Live state</span>
+            <strong>Tabs stay in sync</strong>
+          </div>
         </div>
-      ) : (
-        <>
-          <h1>{isLogin ? 'Login' : 'Register'}</h1>
-          <form onSubmit={handleSubmit}>
-            {!isLogin && (
-              <input
-                type="text"
-                name="name"
-                placeholder="Name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+      </section>
+
+      <section className="AuthCard">
+        {user ? (
+          <div className="WelcomePanel">
+            <div className="StatusBadge">Authenticated</div>
+            <h2>Welcome, {user.displayName || user.name}!</h2>
+            <p className="WelcomeText">
+              You are signed in with {authMethodLabel}.
+            </p>
+
+            <div className="ProfileGrid">
+              <div className="ProfileItem">
+                <span className="ProfileLabel">Email</span>
+                <strong>{user.emails ? user.emails[0].value : user.email}</strong>
+              </div>
+              <div className="ProfileItem">
+                <span className="ProfileLabel">Access mode</span>
+                <strong>{authMethodLabel}</strong>
+              </div>
+            </div>
+
+            <button className="PrimaryButton" onClick={handleLogout}>Logout</button>
+          </div>
+        ) : (
+          <div className="AuthPanel">
+            <div className="AuthHeader">
+              <p className="SectionLabel">{isLogin ? 'Welcome back' : 'Create account'}</p>
+              <h2>{isLogin ? 'Sign in to continue' : 'Create your account'}</h2>
+              <p className="SectionCopy">
+                {isLogin
+                  ? 'Use email and password, or continue with Google SSO.'
+                  : 'Register with email first, or choose Google for quick access.'}
+              </p>
+            </div>
+
+            <form className="AuthForm" onSubmit={handleSubmit}>
+              {!isLogin && (
+                <label className="InputGroup">
+                  <span>Name</span>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Aarav Mehta"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </label>
+              )}
+
+              <label className="InputGroup">
+                <span>Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label className="InputGroup">
+                <span>Password</span>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <button className="PrimaryButton" type="submit">
+                {isLogin ? 'Login' : 'Register'}
+              </button>
+            </form>
+
+            <div className="Divider">
+              <span>or</span>
+            </div>
+
+            <button className="SecondaryButton" onClick={handleGoogleLogin}>
+              Continue with Google SSO
+            </button>
+
+            {message && (
+              <p className={`MessageBanner ${messageTone}`}>{message}</p>
             )}
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <button type="submit">{isLogin ? 'Login' : 'Register'}</button>
-          </form>
-          <button onClick={handleGoogleLogin}>Login with Google</button>
-          <p>{message}</p>
-          <button onClick={() => setIsLogin(!isLogin)}>
-            Switch to {isLogin ? 'Register' : 'Login'}
-          </button>
-        </>
-      )}
-    </div>
+
+            <button className="TextButton" onClick={() => setIsLogin(!isLogin)}>
+              {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
+            </button>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
 
