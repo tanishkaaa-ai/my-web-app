@@ -85,13 +85,17 @@
   display: block;
   margin-top: 10px;
   font-size: 1rem;
-  color: #172337;
+  color: #ffffff;
 }
 
 .FeatureLabel,
 .ProfileLabel,
 .StatusBadge {
   color: #7b5b2f;
+}
+
+.FeatureLabel {
+  color: #d7a15c;
 }
 
 .AuthCard {
