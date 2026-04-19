@@ -87,8 +87,8 @@ app.get("/auth/google/callback",
 
 
 
-/* TEST ROUTE */
-app.get("/", (req, res) => {
+/* HEALTH CHECK */
+app.get("/api/health", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
@@ -195,4 +195,3 @@ app.get("/{*any}", (req, res) => {
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on ${port}`);
 });
-
