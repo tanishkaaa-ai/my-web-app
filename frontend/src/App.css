@@ -33,8 +33,9 @@
 
 .Eyebrow,
 .SectionLabel {
-  color: #ffcf8b;
+  color: #c96b26;
   margin: 0 0 18px;
+  font-weight: 700;
 }
 
 .HeroPanel h1,
@@ -84,13 +85,13 @@
   display: block;
   margin-top: 10px;
   font-size: 1rem;
-  color: #ffffff;
+  color: #172337;
 }
 
 .FeatureLabel,
 .ProfileLabel,
 .StatusBadge {
-  color: rgba(255, 243, 224, 0.62);
+  color: #7b5b2f;
 }
 
 .AuthCard {
@@ -145,6 +146,10 @@
   color: #172337;
   background: #ffffff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.InputGroup input::placeholder {
+  color: #7a8597;
 }
 
 .InputGroup input:focus {
@@ -232,6 +237,11 @@
   background: #edf6e9;
   color: #3e6a38;
   margin-bottom: 18px;
+}
+
+.ProfileItem {
+  background: #fffaf2;
+  border-color: #eadfcf;
 }
 
 .ProfileGrid {
