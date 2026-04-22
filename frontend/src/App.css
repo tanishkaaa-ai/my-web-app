@@ -4,8 +4,16 @@
   grid-template-columns: 1.1fr 0.9fr;
   align-items: stretch;
   background:
-    radial-gradient(circle at top left, rgba(255, 210, 133, 0.22), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(101, 161, 255, 0.18), transparent 30%),
+    radial-gradient(
+      circle at top left,
+      rgba(255, 210, 133, 0.22),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(101, 161, 255, 0.18),
+      transparent 30%
+    ),
     linear-gradient(135deg, #0d1b2a 0%, #132238 52%, #1f3551 100%);
   color: #f7f3ea;
 }
@@ -80,8 +88,7 @@
   padding: 18px 18px 20px;
 }
 
-.FeatureCard strong,
-.ProfileItem strong {
+.FeatureCard strong {
   display: block;
   margin-top: 10px;
   font-size: 1rem;
@@ -149,7 +156,10 @@
   font-size: 1rem;
   color: #172337;
   background: #ffffff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .InputGroup input::placeholder {
@@ -172,7 +182,10 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .PrimaryButton,
@@ -246,6 +259,13 @@
 .ProfileItem {
   background: #fffaf2;
   border-color: #eadfcf;
+}
+
+.ProfileItem strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #172337;
 }
 
 .ProfileGrid {

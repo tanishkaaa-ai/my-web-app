@@ -7,17 +7,14 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/user");
-const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const path = require("path");
 
 const app = express();
-const isProduction = process.env.NODE_ENV === "production";
 const port = Number(process.env.PORT) || 5000;
 const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 const clientUrl = process.env.CLIENT_URL || baseUrl;
-const sessionSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me";
 const allowedOrigins = [...new Set(
   [baseUrl, clientUrl, ...(process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:3001").split(",")]
     .map(origin => origin.trim())
@@ -46,25 +43,7 @@ mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB connected ✅"))
 .catch(err => console.log(err));
 
-
-// Session
-app.use(session({
-  secret: sessionSecret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: process.env.COOKIE_SAME_SITE || "lax"
-  }
-}));
-
 app.use(passport.initialize());
-app.use(passport.session());
-
-// Serialize
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((user, done) => done(null, user));
 
 // Google Strategy
 passport.use(new GoogleStrategy({
@@ -110,11 +89,17 @@ passport.use(new GoogleStrategy({
 
 // Routes
 app.get("/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false
+  })
 );
 
 app.get("/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: `${clientUrl}/` }),
+  passport.authenticate("google", {
+    failureRedirect: `${clientUrl}/?error=sso_failed`,
+    session: false
+  }),
   (req, res) => {
     const token = signToken(req.user._id);
     res.redirect(`${clientUrl}/?token=${token}`);
@@ -136,7 +121,10 @@ app.post("/register", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.json({ message: "User already exists" });
+      const message = existingUser.googleId
+        ? "This email already uses Google SSO. Please sign in with Google."
+        : "User already exists";
+      return res.json({ message });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -167,6 +155,12 @@ app.post("/login", async (req, res) => {
       return res.json({ message: "User not found" });
     }
 
+    if (!user.password) {
+      return res.status(400).json({
+        message: "This account uses Google SSO. Please sign in with Google."
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.json({ message: "Invalid password" });
@@ -182,15 +176,6 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Login error" });
-  }
-});
-
-
-app.get('/api/user', (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ message: 'Not logged in' });
   }
 });
 
@@ -212,10 +197,7 @@ app.get('/profile', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    res.redirect('/');
-  });
+  res.status(204).end();
 });
 
 

@@ -7,3 +7,4 @@ coverage/
 *.log
 _pycache_/
 venv/
+*.pem
